@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 
-class Image:
+class Img:
     def __init__(self):
         self.image = None
         self.target_img = None
@@ -30,7 +30,7 @@ class Image:
                 cv2.rectangle(self.target_img,(x, y),(x + width, y + height), COLOR, 2)
                 cropped = self.target_img[y:y+height, x:x+width]
                 cropped_images.append(cropped)
-        
+
         return cropped_images
 
 

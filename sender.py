@@ -15,7 +15,7 @@ client.on_connect = on_connect
 client.connect("127.0.0.1", 1883, 60)
 
 # 이미지 파일을 바이트로 읽어 Base64 인코딩
-with open("image.jpg", "rb") as image_file:
+with open("/home/addinedu/Downloads/image_88.png", "rb") as image_file:
     image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
 
 # 인코딩된 이미지를 MQTT 메시지로 발행
