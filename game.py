@@ -1,23 +1,23 @@
 import pyautogui
 import numpy as np
 import cv2
-from auto import Image
+import time
 
-
+from auto import *
 
 
 def main():
-    img = Image()
-    img.capture()
-    cropped_images = img.get_chessboard_image()
+    while True:
+        img = Image()
+        img.capture()
+        cropped_images = img.get_chessboard_image()
 
-    for i, cropped in enumerate(cropped_images):
-        cv2.imshow(f'Cropped Image {i}', cropped)
+        for i, cropped in enumerate(cropped_images):
+            cv2.imshow(f'Cropped Image {i}', cropped)
 
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
+        cv2.waitKey(1000)
+        cv2.destroyAllWindows()
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
-# while True:
