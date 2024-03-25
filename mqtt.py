@@ -16,11 +16,12 @@ class MQTTClient:
         print(f"Connected with result code {rc}")
         self.client.subscribe("topic/image")
 
-    def on_message(self, client, userdata, msg):
+    def on_message(self):
         print("Image received")
         image_bytes = base64.b64decode(msg.payload)
-
-        return image_bytes
+        image = Image.open(io.BytesIO(image_bytes))
+        image_np = np.array(image)
+        return image_np
 
     def connect(self):
         self.client.connect(self.broker_address, self.port, 60)
