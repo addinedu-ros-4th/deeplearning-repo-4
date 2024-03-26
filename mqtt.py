@@ -3,6 +3,7 @@ import base64
 import numpy as np
 import io
 from PIL import Image
+import threading
 
 class MQTTClient:
     def __init__(self, broker_address = "192.168.0.41", port = 1883):
@@ -11,18 +12,23 @@ class MQTTClient:
         # self.client.on_message = self.on_message
         self.broker_address = broker_address
         self.port = port
+        self.image_np = None
+        self.image_ready = threading.Event()
+
+    def get_client(self):
+        return self.client
     
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
         self.client.subscribe("topic/image")
 
-    def on_message(self):
+    def on_message(self, client, userdata, msg):
         print("Image received")
         image_bytes = base64.b64decode(msg.payload)
         image = Image.open(io.BytesIO(image_bytes))
-        image_np = np.array(image)
-        return image_np
-
+        self.image_np = np.array(image)
+        self.image_ready.set()
+        
     def connect(self):
         self.client.connect(self.broker_address, self.port, 60)
 
@@ -36,6 +42,12 @@ class MQTTClient:
         image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         self.client.publish(topic, image_base64)
         print("Published image to topic", topic)
+
+    def get_last_image(self):
+        if self.image_np is not None:
+            return self.image_np
+        else:
+            return None
 
     def disconnect(self):
         self.client.disconnect()
