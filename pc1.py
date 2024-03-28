@@ -44,9 +44,6 @@ def main():
 
 
 
-
-
-
         # data = connection.recv(4096)
         # if data is not None:
         #     message = data.decode()
