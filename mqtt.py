@@ -6,7 +6,7 @@ from PIL import Image
 import threading
 
 class MQTTClient:
-    def __init__(self, broker_address = "192.168.0.41", port = 1883):
+    def __init__(self, broker_address = "192.168.0.54", port = 1883):
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         # self.client.on_message = self.on_message
@@ -43,10 +43,17 @@ class MQTTClient:
         print("Published image to topic", topic)
 
     def get_last_image(self):
+<<<<<<< HEAD
 
         return self.image_np
+=======
+        if self.image_np is not None:
+            self.image_ready.clear()
+            return self.image_np
+        else:
+            return None
+>>>>>>> 7a7398ead2065a10f7cabe70ed4cae31d2013f97
 
     def disconnect(self):
         self.client.disconnect()
         print("Disconnected from MQTT broker")
-
