@@ -13,25 +13,24 @@ class MQTTClient:
         self.broker_address = broker_address
         self.port = port
         self.image_np = None
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
         self.image_ready = threading.Event()
-
-    def get_client(self):
-        return self.client
     
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
         self.client.subscribe("topic/image")
 
+
     def on_message(self, client, userdata, msg):
+        self.image_ready.set()
         print("Image received")
         image_bytes = base64.b64decode(msg.payload)
         image = Image.open(io.BytesIO(image_bytes))
         self.image_np = np.array(image)
-        self.image_ready.set()
         
     def connect(self):
         self.client.connect(self.broker_address, self.port, 60)
-
         self.client.loop_start()
 
     def publish_image(self, image_np, topic = "topic/image"):
@@ -44,11 +43,16 @@ class MQTTClient:
         print("Published image to topic", topic)
 
     def get_last_image(self):
+<<<<<<< HEAD
+
+        return self.image_np
+=======
         if self.image_np is not None:
             self.image_ready.clear()
             return self.image_np
         else:
             return None
+>>>>>>> 7a7398ead2065a10f7cabe70ed4cae31d2013f97
 
     def disconnect(self):
         self.client.disconnect()
