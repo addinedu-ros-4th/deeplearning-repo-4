@@ -1,29 +1,31 @@
 from ultralytics import YOLO
-from mqtt import *
 import time
 import cv2
 import pandas as pd
-import torch
+
 import numpy as np
+from PIL import Image
+import pyautogui
+from auto import *
 
 def main():
-
-    model = torch.hub.load("ultralytics/yolov5", "custom", path="best.pt")  # or yolov5n - yolov5x6, custom
-    mqtt_client = MQTTClient()
-    client = mqtt_client.get_client()
-    client.on_message = mqtt_client.on_message
-    mqtt_client.connect()
+    time.sleep(2)
     
-    while True:
-        mqtt_client.image_ready.wait()
-        img = mqtt_client.get_last_image()
-        if img is not None:
-            #results = model(img)  # inference
-            #crops = results.crop(save=True)  # cropped detections dictionary
-            results = model(img)  # inference
-            print(results.pandas().xyxy[0])
-        mqtt_client.image_ready.clear()
+    model = YOLO("best_v8.pt")
+    img = Img()
+    frame = img.capture()
+    # cropped_images = img.get_chessboard_image()
 
-        
+    # for i, cropped in enumerate(cropped_images):
+    #     frame = cropped
+    #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #     print(type(frame))
+    results = model.predict(frame)
+
+    for r in results:
+        im_array = r.plot()  # plot a BGR numpy array of predictions
+        im = Image.fromarray(im_array[..., ::-1])  # RGB PIL image
+        im.show()  # show image
+
 if __name__ == "__main__":
     main()

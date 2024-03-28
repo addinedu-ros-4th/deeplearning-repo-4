@@ -9,10 +9,11 @@ class Img:
         self.target_img = None
 
     def capture(self):
-        pil_image = pyautogui.screenshot()
+        pil_image = pyautogui.screenshot(region=(0,0, 1920, 1080))
         opencv_image = np.array(pil_image)
         self.img = cv2.cvtColor(opencv_image, cv2.COLOR_RGB2BGR)
         self.target_img = self.img.copy()
+        return self.img
 
     def get_chessboard_image(self):
         if self.img is None:

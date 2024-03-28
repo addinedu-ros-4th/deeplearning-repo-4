@@ -3,10 +3,13 @@ import socket
 import struct
 import numpy as np
 import yaml
-
+from PIL import Image
 from ultralytics import YOLO
+import torch
 
 def main():
+
+    model = YOLO("best_v8.pt")
 
     with open("data.yaml") as file:
         data = yaml.load(file, Loader= yaml.FullLoader)
@@ -36,11 +39,15 @@ def main():
 
         frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        print(type(frame))
+        
+        results = model(frame)
 
-        cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
+
 
     client_socket.close()
     cv2.destroyAllWindows()
