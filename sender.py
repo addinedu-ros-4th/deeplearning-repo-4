@@ -5,7 +5,7 @@ import cv2
 import struct
 
 # 소켓 연결 설정
-HOST_IP = "192.168.0.54"  # PC2의 IP 주소로 변경하세요.
+HOST_IP = "192.168.0.41"  # PC2의 IP 주소로 변경하세요.
 PORT = 9999
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST_IP, PORT))

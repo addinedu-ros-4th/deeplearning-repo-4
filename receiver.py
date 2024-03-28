@@ -18,8 +18,8 @@ else:
 # 이후 코드는 동일하게 사용
 
 # 소켓 연결 설정
-HOST_IP = "192.168.0.54"  # PC2의 자신의 IP 주소로 변경하세요.
-PORT = 9999
+HOST_IP = "192.168.0.41"  # PC2의 자신의 IP 주소로 변경하세요.
+PORT = 11111
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST_IP, PORT))
 
@@ -42,49 +42,51 @@ while True:
 
     frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)  # 이미지 디코딩
 
-    # YOLO를 사용한 객체 인식
-    height, width, channels = frame.shape
-    blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
-    net.setInput(blob)
-    outs = net.forward(output_layers)
+    # # YOLO를 사용한 객체 인식
+    # height, width, channels = frame.shape
+    # blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+    # net.setInput(blob)
+    # outs = net.forward(output_layers)
 
-    # 인식된 객체 정보 처리
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.5:  # 정확도가 50% 이상인 경우만 처리
-                # 객체 인식 처리 로직
-                pass
+    # # 인식된 객체 정보 처리
+    # for out in outs:
+    #     for detection in out:
+    #         scores = detection[5:]
+    #         class_id = np.argmax(scores)
+    #         confidence = scores[class_id]
+    #         if confidence > 0.5:  # 정확도가 50% 이상인 경우만 처리
+    #             # 객체 인식 처리 로직
+    #             pass
 
     cv2.imshow('frame', frame)
         # 인식된 객체 정보 처리
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            class_id = np.argmax(scores)
-            confidence = scores[class_id]
-            if confidence > 0.5:  # 정확도가 50% 이상인 경우만 처리
-                # 객체의 위치 정보 계산
-                center_x = int(detection[0] * width)
-                center_y = int(detection[1] * height)
-                w = int(detection[2] * width)
-                h = int(detection[3] * height)
+    # for out in outs:
+    #     for detection in out:
+    #         scores = detection[5:]
+    #         class_id = np.argmax(scores)
+    #         confidence = scores[class_id]
+    #         if confidence > 0.5:  # 정확도가 50% 이상인 경우만 처리
+    #             # 객체의 위치 정보 계산
+    #             center_x = int(detection[0] * width)
+    #             center_y = int(detection[1] * height)
+    #             w = int(detection[2] * width)
+    #             h = int(detection[3] * height)
 
-                # 객체의 사각형 테두리 계산
-                x = int(center_x - w / 2)
-                y = int(center_y - h / 2)
+    #             # 객체의 사각형 테두리 계산
+    #             x = int(center_x - w / 2)
+    #             y = int(center_y - h / 2)
 
-                # 인식된 객체에 대해 사각형 및 텍스트로 표시
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, f"ID: {class_id}, Confidence: {confidence:.2f}", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+    #             # 인식된 객체에 대해 사각형 및 텍스트로 표시
+    #             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    #             cv2.putText(frame, f"ID: {class_id}, Confidence: {confidence:.2f}", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-    # 결과 화면 표시
+    # # 결과 화면 표시
     cv2.imshow('frame', frame)
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):  # 'q' 키를 누르면 종료
         break
+    message_1 = "Hi"
+    client_socket.send(message_1.encode())
 
 # 자원 해제
 client_socket.close()
