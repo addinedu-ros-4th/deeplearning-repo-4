@@ -43,16 +43,13 @@ class MQTTClient:
         print("Published image to topic", topic)
 
     def get_last_image(self):
-<<<<<<< HEAD
 
-        return self.image_np
-=======
         if self.image_np is not None:
             self.image_ready.clear()
             return self.image_np
         else:
             return None
->>>>>>> 7a7398ead2065a10f7cabe70ed4cae31d2013f97
+
 
     def disconnect(self):
         self.client.disconnect()

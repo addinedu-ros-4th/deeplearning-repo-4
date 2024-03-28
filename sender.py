@@ -20,7 +20,6 @@ print("클라이언트 연결 대기중...")
 connection, addr = server_socket.accept()
 print(f"{addr}에서 연결되었습니다.")
 
-data = None
 # 화면 캡처 및 전송
 while True:
     img = Img()
