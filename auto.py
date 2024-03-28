@@ -33,6 +33,17 @@ class Img:
 
         return cropped_images
 
+def main():
+    img = Img()
+    img.capture()
+    cropped_images = img.get_chessboard_image()
+
+    for i, cropped in enumerate(cropped_images):
+        cv2.imshow(f'Cropped Image {i}', cropped)
+        print(type(cropped))
+
+if __name__ == "__main__":
+    main()
 
 
 

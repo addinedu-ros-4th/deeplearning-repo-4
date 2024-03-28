@@ -5,11 +5,8 @@ import time
 
 
 from auto import *
-from mqtt import *
 
 def main():
-    mqtt_client = MQTTClient()
-    mqtt_client.connect()
 
     while True:
         img = Img()
