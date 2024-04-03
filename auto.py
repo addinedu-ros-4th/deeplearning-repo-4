@@ -15,24 +15,13 @@ class Img:
         self.target_img = self.img.copy()
         return self.img
 
-    def get_chessboard_image(self):
-        if self.img is None:
-            raise ValueError("Image not captured. Please run capture() method first.")
-        
-        gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-        ret, otsu = cv2.threshold(gray, -1,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-        contours, hierarchy = cv2.findContours(otsu, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
-        cropped_images = []
-        COLOR = (0, 200, 0) #Rectangle color
+    def automouse(self, move, top_left_corner, square_size):
+        from_x = top_left_corner[0] + square_size * (ord(move[0]) - ord("a")) + square_size / 2
+        from_y = top_left_corner[1] + square_size * (8 - int(move[1])) + square_size / 2
+        to_x = top_left_corner[0] + square_size * (ord(move[2]) - ord("a")) + square_size / 2
+        to_y = top_left_corner[1] + square_size * (8 - int(move[3])) + square_size / 2
+        return from_x, from_y, to_x, to_y
 
-        for cnt in contours:
-            if cv2.contourArea(cnt) > 100000:
-                x, y, width, height = cv2.boundingRect(cnt)
-                cv2.rectangle(self.target_img,(x, y),(x + width, y + height), COLOR, 2)
-                cropped = self.target_img[y:y+height, x:x+width]
-                cropped_images.append(cropped)
-
-        return cropped_images
 
 def main():
     img = Img()
