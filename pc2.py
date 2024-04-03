@@ -6,16 +6,13 @@ import yaml
 from PIL import Image
 from ultralytics import YOLO
 import torch
-
+import json
 from auto import *
 from chess_game import *
-
 from alpha_zero_model.config import Config
 from alpha_zero_model.chess_env import ChessEnv
 from alpha_zero_model.player_chess import ChessPlayer
 from alpha_zero_model.model_chess import ChessModel
-
-import time
 
 def find_move(board1, board2):
     for move in board1.legal_moves:
@@ -44,7 +41,6 @@ def main():
     if not chess_model.load(chess_model_path):
         raise RuntimeError("Failed to load the trained model weights")
     
-
     class_mapping = {
     0: "chessboard",
     1: "b",
@@ -61,26 +57,19 @@ def main():
     12: "R"
     }
 
-
-    x_norm = 1920/1850
-    y_norm = 1080/1053
-
     count = 0
-
     x_left = 0
     y_top = 0
     width = 0
     height = 0
     prev_fen = None
-
-    pipe = chess_model.get_pipes(num = 18)
-    chess_player = ChessPlayer(config,pipes= pipe)
+    fen = None
+    chess_player = ChessPlayer(config, chess_model.get_pipes(config.play.search_threads))
 
     env = ChessEnv().reset()
     is_turn = True
     is_moving = False
-
-
+    is_start = False
 
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -115,7 +104,7 @@ def main():
         frame = results[0].plot(font_size = 10, pil = True)
 
         for cnt in contours:
-            if cv2.contourArea(cnt) > 600000:
+            if cv2.contourArea(cnt) > 500000:
                 x, y, width, height = cv2.boundingRect(cnt)
                 ratio = width / height 
                 if 0.9 < ratio < 1.1:
@@ -137,7 +126,7 @@ def main():
         xy_np = xywh_np[:, :2]
         positions = []
         for x,y in xy_np:
-            position = pixel_to_chess_coord(int(x), int(y), (x_left, y_top), width // 8)
+            position = pixel_to_chess_coord(int(x), int(y), (x_left, y_top), 100)
             positions.append(position)
         positions = np.array(positions)
         pieces_positions = dict(zip(positions, mapped_classes_np))
@@ -148,33 +137,24 @@ def main():
 
         if is_turn == True and fen == env.board.fen().split(' ')[0]:
             count = 0
-            print(fen)
-            print(env.board.fen().split(' ')[0])
             action = chess_player.action(env)
             env.step(action)
-            print(f"move : {action}")
             from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
-            pyautogui.click()
-            pyautogui.moveTo(from_x * x_norm, from_y * y_norm)
-            pyautogui.click()
-            pyautogui.moveTo(to_x * x_norm, to_y * y_norm)
-            pyautogui.click()
-            print(env.board)
+            pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
+            json_pixel_data = json.dumps(pixel_data) 
+            client_socket.sendall(json_pixel_data.encode('utf-8'))
             is_moving = True
-            print(is_moving)
             is_turn = False
+            if action:
+                is_start = True
         elif is_moving == True and fen == env.board.fen().split(' ')[0]:
-            print("중간")
             is_moving = False
-        elif is_moving == False and fen != env.board.fen().split(' ')[0]:
-            pyautogui.moveTo(1900, 1000)
+        elif is_moving == False and fen != env.board.fen().split(' ')[0] and is_start == True:
             if prev_fen == fen:
                 count += 1
                 if count >= 15:
                     changes = compare_positions(fen, env.board.fen().split(' ')[0])
-                    print(f"black action {changes}")
                     env.step(changes)
-                    print(env.board)
                     is_turn = True
                     count = 0
 
