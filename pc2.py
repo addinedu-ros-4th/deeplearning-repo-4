@@ -106,19 +106,13 @@ def main():
         for cnt in contours:
             if cv2.contourArea(cnt) > 500000:
                 x, y, width, height = cv2.boundingRect(cnt)
-<<<<<<< HEAD
-                if  width / height > 0.9  and width / height < 1.1:
-                # cv2.rectangle(image,(x, y),(x + width, y + height), COLOR, 2)
-                    cropped = frame[y:y+height, x:x+width]
-                    cv2.imshow('frame', cropped)
-=======
+
                 ratio = width / height 
                 if 0.9 < ratio < 1.1:
                     x_left, y_top, width, height = cv2.boundingRect(cnt)
                     cropped = frame[y_top : y_top + height, x_left : x_left + width]
                     cv2.imshow('frame', cropped)
                     
->>>>>>> fc6ad9a2763febb0631c89207afe6f07913b05f1
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
