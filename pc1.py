@@ -6,7 +6,7 @@ import yaml
 import json
 import pyautogui
 import threading
-import queue
+from queue import Queue
 
 from auto import *
 
@@ -20,7 +20,7 @@ def handle_client(connection,pixel_queue):
             break
 
 def main():
-    pixel_queue = queue.Queue()
+    pixel_queue = Queue()
     with open("data.yaml") as file:
         data = yaml.load(file, Loader= yaml.FullLoader)
         HOST_IP = data["ip"]
@@ -36,6 +36,8 @@ def main():
     connection, addr = server_socket.accept()
     print(f"{addr}에서 연결되었습니다.")
     img = Img()
+    server_thread = threading.Thread(target=handle_client, args=(connection, pixel_queue))
+    server_thread.start()
 
     while True:
 
@@ -47,8 +49,6 @@ def main():
         size = len(data)
         connection.sendall(struct.pack(">L", size) + data)
 
-        server_thread = threading.Thread(target=handle_client, args=(connection, pixel_queue))
-        server_thread.start()
         if not pixel_queue.empty():
             pixel_data = pixel_queue.get()
             from_x = pixel_data["from_x"]

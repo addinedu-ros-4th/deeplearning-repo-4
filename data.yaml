@@ -1,4 +1,4 @@
 ip : "192.168.0.41"
-port : 18883
-yolo_model_path : "best_v8.pt"
+port : 18887
+yolo_model_path : "yolov5nu_best.pt"
 chess_model_path : "mini-ver-model/model/model_best_weight.h5"
