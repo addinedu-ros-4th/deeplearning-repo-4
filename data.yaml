@@ -2,3 +2,4 @@ ip : "192.168.0.54"
 port : 18885
 yolo_model_path : "best_v8.pt"
 chess_model_path : "mini-ver-model/model/model_best_weight.h5"
+
