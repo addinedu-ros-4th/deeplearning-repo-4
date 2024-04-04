@@ -180,7 +180,7 @@ def main():
         elif is_moving == False and fen != env.board.fen().split(' ')[0] and is_start == True:
             if prev_fen == fen:
                 count += 1
-                if count >= 5000:
+                if count >= 10000:
                     changes = compare_positions(fen, env.board.fen().split(' ')[0])
                     print(f"changes : {changes}")
                     env.step(changes)
