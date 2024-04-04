@@ -1,4 +1,5 @@
 import cv2
+import sys
 import socket
 import struct
 import numpy as np
@@ -13,43 +14,32 @@ from alpha_zero_model.chess_env import ChessEnv
 from alpha_zero_model.player_chess import ChessPlayer
 from alpha_zero_model.model_chess import ChessModel
 
-from queue import Queue
 import threading
 
 from supervision import Detections, BoxAnnotator
 from supervision.draw.color import ColorPalette
 
-def data_receiving_thread(client_socket, frame_queue):
-    payload_size = struct.calcsize(">L")
-    data = b""
+from PyQt5 import QtWidgets, uic, QtGui, QtCore
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
-    while True:
-        while len(data) < payload_size:
-            packet = client_socket.recv(4096)
-            if not packet: break
-            data += packet
+from_class = uic.loadUiType("chessAI.ui")[0]
 
-        if not data:
-            break
+class WindowClass(QMainWindow, from_class) :
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.setWindowTitle("CHESS AI")
+    
+    def updateImage(self, image):
+        h, w, ch = image.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(640, 480, Qt.KeepAspectRatio)
+        self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
 
-        packed_msg_size = data[:payload_size]
-        data = data[payload_size:]
-        msg_size = struct.unpack(">L", packed_msg_size)[0]
-
-        while len(data) < msg_size:
-            data += client_socket.recv(4096)
-
-        frame_data = data[:msg_size]
-        data = data[msg_size:]
-
-        frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        frame_queue.put(frame)
-
- 
-
-def main():
+def model_workers():
     with open("data.yaml") as file:
         data = yaml.load(file, Loader= yaml.FullLoader)
         HOST_IP = data["ip"]
@@ -91,7 +81,6 @@ def main():
     height = 0
     prev_fen = None
     fen = None
-    frame_queue = Queue(maxsize = 1)
     box_annotator = BoxAnnotator(color = ColorPalette.default(), thickness = 2, text_thickness = 1, text_scale = 0.3)
     chess_player = ChessPlayer(config, chess_model.get_pipes(config.play.search_threads))
     env = ChessEnv().reset()
@@ -102,70 +91,81 @@ def main():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST_IP, PORT))
 
-    receiving_thread = threading.Thread(target=data_receiving_thread, args=(client_socket, frame_queue))
-    receiving_thread.start()
+    data = b""
+    payload_size = struct.calcsize(">L")
     
     while True:
-        if not frame_queue.empty():
-            rgb = frame_queue.get()
-            gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
-            ret, otsu = cv2.threshold(gray, -1,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-            contours, hierarchy = cv2.findContours(otsu, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-
-            results = yolo_model(source= rgb, classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], verbose = False, conf = 0.5)
-            boxes = results[0].boxes
-            xywh_np = boxes.xywh.cpu().numpy()
-            xyxy_np = boxes.xyxy.cpu().numpy()
-            classes_np = boxes.cls.cpu().numpy()
-            confidence_np =  boxes.conf.cpu().numpy()
-            class_name = results[0].names
-            detections = Detections(
-                xyxy = xyxy_np,
-                confidence = confidence_np,
-                class_id = classes_np.astype(int)
-            )
-
-            labels = [
-                f"{class_name[class_id]} {confidence:0.2f}"
-                for _, _, confidence, class_id, _, _
-                in detections
-            ]
-
-            frame = box_annotator.annotate(scene = rgb, detections = detections, labels= labels)
-
-            for cnt in contours:
-                if cv2.contourArea(cnt) > 500000:
-                    x, y, width, height = cv2.boundingRect(cnt)
-                    ratio = width / height 
-                    if 0.9 < ratio < 1.1:
-                        x_left, y_top, width, height = cv2.boundingRect(cnt)
-                        cropped = frame[y_top : y_top + height, x_left : x_left + width]
-                        cv2.imshow('frame', cropped)
-                        
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                break
+        while len(data) < payload_size:
+            data += client_socket.recv(4096)
         
+        packed_msg_size = data[:payload_size]
+        data = data[payload_size:]
+        msg_size = struct.unpack(">L", packed_msg_size)[0]
 
-            vectorized_mapping = np.vectorize(class_mapping.get)
+        while len(data) < msg_size:
+            data += client_socket.recv(4096)
+        
+        frame_data = data[:msg_size]
+        data = data[msg_size:]
 
-            mapped_classes_np = vectorized_mapping(classes_np)
-            xy_np = xywh_np[:, :2]
-            positions = []
-            for x,y in xy_np:
-                position = pixel_to_chess_coord(int(x), int(y), (x_left, y_top), 100)
-                positions.append(position)
-            positions = np.array(positions)
-            pieces_positions = dict(zip(positions, mapped_classes_np))
-            fen = create_fen_from_positions(pieces_positions)
+        frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        rgb = frame.copy()
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        ret, otsu = cv2.threshold(gray, -1,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        contours, hierarchy = cv2.findContours(otsu, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
+        COLOR = (0, 200, 0) #Rectangle color
+        
+        results = yolo_model.predict(source= frame, classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], verbose=False, conf= 0.5)
+        boxes = results[0].boxes
+        xywh_np = boxes.xywh.cpu().numpy()
+        xyxy_np = boxes.xyxy.cpu().numpy()
+        classes_np = boxes.cls.cpu().numpy()
+        confidence_np =  boxes.conf.cpu().numpy()
+        class_name = results[0].names
+        detections = Detections(
+            xyxy = xyxy_np,
+            confidence = confidence_np,
+            class_id = classes_np.astype(int)
+        )
 
+        labels = [
+            f"{class_name[class_id]} {confidence:0.2f}"
+            for _, _, confidence, class_id, _, _
+            in detections
+        ]
+
+        frame = box_annotator.annotate(scene = rgb, detections = detections, labels= labels)
+
+        for cnt in contours:
+            if cv2.contourArea(cnt) > 500000:
+                x, y, width, height = cv2.boundingRect(cnt)
+                ratio = width / height 
+                if 0.9 < ratio < 1.1:
+                    x_left, y_top, width, height = cv2.boundingRect(cnt)
+                    cropped = frame[y_top : y_top + height, x_left : x_left + width]
+                    if 'myWindows' in globals():
+                        myWindows.updateImage(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))     
+
+
+        vectorized_mapping = np.vectorize(class_mapping.get)
+
+        mapped_classes_np = vectorized_mapping(classes_np)
+        xy_np = xywh_np[:, :2]
+        positions = []
+        for x,y in xy_np:
+            position = pixel_to_chess_coord(int(x), int(y), (x_left, y_top), 100)
+            positions.append(position)
+        positions = np.array(positions)
+        pieces_positions = dict(zip(positions, mapped_classes_np))
+        fen = create_fen_from_positions(pieces_positions)
         if prev_fen == None:
             prve_fen = fen
 
         if is_turn == True and fen == env.board.fen().split(' ')[0]:
             count = 0
             action = chess_player.action(env)
+            print(action)
             env.step(action)
             from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
             pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
@@ -180,7 +180,7 @@ def main():
         elif is_moving == False and fen != env.board.fen().split(' ')[0] and is_start == True:
             if prev_fen == fen:
                 count += 1
-                if count >= 10000:
+                if count >= 10:
                     changes = compare_positions(fen, env.board.fen().split(' ')[0])
                     print(f"changes : {changes}")
                     env.step(changes)
@@ -191,7 +191,12 @@ def main():
 
 
     client_socket.close()
-    cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
-    main()
+    worker_thread = threading.Thread(target= model_workers)
+    worker_thread.start()
+    app = QApplication(sys.argv)
+    myWindows= WindowClass()   
+    myWindows.show()   
+    sys.exit(app.exec_())
