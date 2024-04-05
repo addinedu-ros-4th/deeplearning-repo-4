@@ -1,4 +1,5 @@
 import cv2
+import chess
 import sys
 import socket
 import struct
@@ -34,8 +35,59 @@ class WindowClass(QMainWindow, from_class) :
         h, w, ch = image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(640, 480, Qt.KeepAspectRatio)
+        p = convert_to_Qt_format.scaled(580, 580, Qt.KeepAspectRatio)
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
+    
+    def mycurrentMove(self, action):
+        split_position = 2 
+        move = action
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.mymove.setText(f"{first_part}  to {second_part}")
+        move = f"Addin-Pago: {first_part}  to {second_part}"
+        myWindows.gameLog(move)
+
+    def aicurrentMove(self, changes):
+        split_position = 2 
+        move = changes
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.compmove.setText(f"{first_part} to {second_part}")
+        move = f"Chess.com: {first_part} to {second_part}"
+        myWindows.gameLog(move)
+    
+    def gameLog(self, moves):
+        current_text = self.gamehistory.text()
+        text = current_text+'\n' + moves
+        self.gamehistory.setText(text)
+
+    def captured(self, cur_piece, prev_piece):
+        piece_map = {
+            "p": "Black Pawn", "r": "Black Rook", "n": "Black Knight", 
+            "b": "Black Bishop", "k": "Black King", "q": "Black Queen",
+            "P": "White Pawn", "R": "White Rook", "N": "White Knight", 
+            "B": "White Bishop", "K": "White King", "Q": "White Queen"
+        }
+
+        # 문자열로 변환
+        cur_piece_str = str(cur_piece)
+        prev_piece_str = str(prev_piece)
+
+        # 말의 심볼을 이름으로 변환, 맵에 없는 경우 'Unknown piece'로 처리
+        current = str(piece_map.get(cur_piece_str, "Unknown piece"))
+        previous = str(piece_map.get(prev_piece_str, "Unknown piece"))
+
+        if previous.islower():
+            current_text = self.blackpieces.text()
+            text = current_text + previous + ','
+            self.blackpieces.setText(text)
+        else:
+            current_text = self.whitepieces.text()
+            text = current_text + previous + ','
+            self.whitepieces.setText(text)
+        
+
+
 
 def model_workers():
     with open("data.yaml") as file:
@@ -91,7 +143,7 @@ def model_workers():
 
     data = b""
     payload_size = struct.calcsize(">L")
-    
+
     while True:
         while len(data) < payload_size:
             data += client_socket.recv(4096)
@@ -158,13 +210,20 @@ def model_workers():
         pieces_positions = dict(zip(positions, mapped_classes_np))
         fen = create_fen_from_positions(pieces_positions)
         if prev_fen == None:
-            prve_fen = fen
+            prev_fen = fen
 
         if is_turn == True and fen == env.board.fen().split(' ')[0]:
             count = 0
             action = chess_player.action(env)
-            print(action)
+            print(f"action :{action}")
+            myWindows.mycurrentMove(action)
+            prev_pos = action[2:]
+            prev_pos = chess.parse_square(prev_pos)
+            prev_piece = env.board.piece_at(prev_pos)
             env.step(action)
+            cur_pos = action[2:]
+            cur_pos = chess.parse_square(cur_pos)
+            cur_piece = env.board.piece_at(cur_pos)
             from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
             pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
             json_pixel_data = json.dumps(pixel_data) 
@@ -178,12 +237,23 @@ def model_workers():
         elif is_moving == False and fen != env.board.fen().split(' ')[0] and is_start == True:
             if prev_fen == fen:
                 count += 1
-                if count >= 10:
+                if count >= 5:
                     changes = compare_positions(fen, env.board.fen().split(' ')[0])
                     print(f"changes : {changes}")
+                    myWindows.aicurrentMove(changes)
+                    prev_pos = changes[2:]
+                    prev_pos = chess.parse_square(prev_pos)
+                    prev_piece = env.board.piece_at(prev_pos)
                     env.step(changes)
+                    cur_pos = changes[2:]
+                    cur_pos = chess.parse_square(cur_pos)
+                    cur_piece = env.board.piece_at(cur_pos)
                     is_turn = True
                     count = 0
+
+        if prev_piece != None and prev_piece != cur_piece:
+            print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
+            myWindows.captured(cur_piece, prev_piece)
 
         prev_fen = fen
 
