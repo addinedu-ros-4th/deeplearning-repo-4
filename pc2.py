@@ -47,16 +47,16 @@ def model_workers(myWindows):
         PORT = data["port"]
         yolo_model_path = data["yolo_model_path"]
         chess_model_path = data["chess_model_path"]
-
+        chess_config_path = data["chess_config_path"]
     img = Img()
 
     yolo_model = YOLO(yolo_model_path)
     config = Config()
     chess_model = ChessModel(config)
     chess_model.build()
-    chess_model.load(chess_model_path)
+    chess_model.load(chess_config_path, chess_model_path)
 
-    if not chess_model.load(chess_model_path):
+    if not chess_model.load(chess_config_path, chess_model_path):
         raise RuntimeError("Failed to load the trained model weights")
     
     class_mapping = {
@@ -173,7 +173,7 @@ def model_workers(myWindows):
         if start == True:
             if is_turn == True and yolo_fen == chess_module_fen and is_moving == False:
                 action = chess_player.action(env)
-                print(f"white move :{action}")
+                print(f"white moves :{action}")
                 prev_pos = action[2:4]
                 prev_pos = chess.parse_square(prev_pos)
                 prev_piece = env.board.piece_at(prev_pos)
@@ -198,36 +198,36 @@ def model_workers(myWindows):
                 
                 if prev_yolo_fen == yolo_fen:
                     count += 1
-                if count >10:
+                if count > 25:
                     changes = compare_positions(yolo_fen, chess_module_fen)
-                    
-                    counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
-                    prev_classes_number = list(counter.items())
-                    prev_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),prev_classes_number))
-                    prev_pos = changes[2:4]
-                    prev_pos = chess.parse_square(prev_pos)
-                    prev_piece = env.board.piece_at(prev_pos)
-                    if is_promotion_move(changes, env.board):
-                        print(f"Promotion detected: {changes}")
+                    if chess.Move.from_uci(changes) in env.board.legal_moves:
                         counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
-                        cur_classes_number = list(counter.items())
-                        cur_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),cur_classes_number))
-                        promotion = identify_promotion(prev_classes_number, cur_classes_number)
-                        changes += promotion  
-                    print(f"black moves : {changes}")
-                    env.step(changes)
-                    cur_pos = changes[2:4]
-                    cur_pos = chess.parse_square(cur_pos)
-                    cur_piece = env.board.piece_at(cur_pos)
-                    is_turn = True
-                    if prev_piece != None and prev_piece != cur_piece:
-                        print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
+                        prev_classes_number = list(counter.items())
+                        prev_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),prev_classes_number))
+                        prev_pos = changes[2:4]
+                        prev_pos = chess.parse_square(prev_pos)
+                        prev_piece = env.board.piece_at(prev_pos)
+                        if is_promotion_move(changes, env.board):
+                            print(f"Promotion detected: {changes}")
+                            counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
+                            cur_classes_number = list(counter.items())
+                            cur_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),cur_classes_number))
+                            promotion = identify_promotion(prev_classes_number, cur_classes_number)
+                            changes += promotion  
+                        print(f"black moves : {changes}")
+                        env.step(changes)
+                        cur_pos = changes[2:4]
+                        cur_pos = chess.parse_square(cur_pos)
+                        cur_piece = env.board.piece_at(cur_pos)
+                        is_turn = True
+                        if prev_piece != None and prev_piece != cur_piece:
+                            print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
 
                     count = 0
             if env.board.is_game_over():
                 print("game is over")
+                print(env.board.result())
                 break
-
 
 
     client_socket.close()
