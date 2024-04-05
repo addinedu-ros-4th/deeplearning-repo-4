@@ -1,3 +1,5 @@
+import chess
+
 def pixel_to_chess_coord(x, y, top_left_corner, square_size):
 
     file = (x - top_left_corner[0]) // square_size
@@ -54,7 +56,34 @@ def compare_positions(fen1, fen2):
             if board1[i][j] != board2[i][j]:
                 differences.append(((chr(j + 97) + str(8 - i)), board1[i][j], board2[i][j]))
 
-    if differences[0][1] == " ":
-        return f"{differences[0][0]}{differences[1][0]}"
-    elif differences[0][1] != " ":
-        return f"{differences[1][0]}{differences[0][0]}"
+    if len(differences) >= 2:
+        if differences[0][1] == " ":
+            result =  f"{differences[0][0]}{differences[1][0]}"
+        elif differences[0][1] != " ":
+            result =  f"{differences[1][0]}{differences[0][0]}"
+    else:
+        result = None
+
+    return result
+
+def is_promotion_move(move, board):
+    """
+    주어진 움직임이 프로모션인지 확인합니다.
+    """
+    from_square, to_square = chess.SQUARE_NAMES.index(move[:2]), chess.SQUARE_NAMES.index(move[2:4])
+    moving_piece = board.piece_at(from_square)
+    if moving_piece and moving_piece.piece_type == chess.PAWN:
+        if (moving_piece.color == chess.WHITE and chess.square_rank(to_square) == 7) or \
+           (moving_piece.color == chess.BLACK and chess.square_rank(to_square) == 0):
+            return True
+    return False
+
+def identify_promotion(prev_detections, current_detections):
+
+    for cls, count in current_detections.items():
+        prev_count = prev_detections.get(cls, 0)
+
+        if count > prev_count:
+            promotion = cls
+            break
+    return promotion

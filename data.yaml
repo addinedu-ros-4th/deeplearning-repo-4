@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 ip : "192.168.0.54"
 port : 18885
 yolo_model_path : "best_v8.pt"
 chess_model_path : "mini-ver-model/model/model_best_weight.h5"
 
+=======
+ip : "192.168.0.41"
+port : 18886
+yolo_model_path : "yolov5nu_best.pt"
+chess_model_path : "/home/addinedu/amr_ws/git_ws/deeplearning-repo-4/alpha_zero_model/model_best_weight_2.h5"
+chess_config_path : "/home/addinedu/amr_ws/git_ws/deeplearning-repo-4/alpha_zero_model/model_best_config_2.json"
+>>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
