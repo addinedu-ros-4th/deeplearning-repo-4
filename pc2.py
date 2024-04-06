@@ -1,9 +1,6 @@
 import cv2
-<<<<<<< HEAD
 import chess
-=======
 from collections import Counter
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
 import sys
 import socket
 import struct
@@ -40,11 +37,8 @@ class WindowClass(QMainWindow, from_class) :
         h, w, ch = image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-<<<<<<< HEAD
         p = convert_to_Qt_format.scaled(580, 580, Qt.KeepAspectRatio)
-=======
-        p = convert_to_Qt_format.scaled(540, 540, Qt.KeepAspectRatio)
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
+
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
     
     def mycurrentMove(self, action):
@@ -219,56 +213,6 @@ def model_workers(myWindows):
             positions.append(position)
         positions = np.array(positions)
         pieces_positions = dict(zip(positions, mapped_classes_np))
-<<<<<<< HEAD
-        fen = create_fen_from_positions(pieces_positions)
-        if prev_fen == None:
-            prev_fen = fen
-
-        if is_turn == True and fen == env.board.fen().split(' ')[0]:
-            count = 0
-            action = chess_player.action(env)
-            print(f"action :{action}")
-            myWindows.mycurrentMove(action)
-            prev_pos = action[2:]
-            prev_pos = chess.parse_square(prev_pos)
-            prev_piece = env.board.piece_at(prev_pos)
-            env.step(action)
-            cur_pos = action[2:]
-            cur_pos = chess.parse_square(cur_pos)
-            cur_piece = env.board.piece_at(cur_pos)
-            from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
-            pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
-            json_pixel_data = json.dumps(pixel_data) 
-            client_socket.sendall(json_pixel_data.encode('utf-8'))
-            is_moving = True
-            is_turn = False
-            if action:
-                is_start = True
-        elif is_moving == True and fen == env.board.fen().split(' ')[0]:
-            is_moving = False
-        elif is_moving == False and fen != env.board.fen().split(' ')[0] and is_start == True:
-            if prev_fen == fen:
-                count += 1
-                if count >= 5:
-                    changes = compare_positions(fen, env.board.fen().split(' ')[0])
-                    print(f"changes : {changes}")
-                    myWindows.aicurrentMove(changes)
-                    prev_pos = changes[2:]
-                    prev_pos = chess.parse_square(prev_pos)
-                    prev_piece = env.board.piece_at(prev_pos)
-                    env.step(changes)
-                    cur_pos = changes[2:]
-                    cur_pos = chess.parse_square(cur_pos)
-                    cur_piece = env.board.piece_at(cur_pos)
-                    is_turn = True
-                    count = 0
-
-        if prev_piece != None and prev_piece != cur_piece:
-            print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
-            myWindows.captured(cur_piece, prev_piece)
-
-        prev_fen = fen
-=======
 
         if yolo_fen is not None:
             prev_yolo_fen = yolo_fen
@@ -282,7 +226,7 @@ def model_workers(myWindows):
         if start == True:
             if is_turn == True and yolo_fen == chess_module_fen and is_moving == False:
                 action = chess_player.action(env)
-                print(f"white moves :{action}")
+                print(f"white moves : {action}")
                 prev_pos = action[2:4]
                 prev_pos = chess.parse_square(prev_pos)
                 prev_piece = env.board.piece_at(prev_pos)
@@ -337,7 +281,6 @@ def model_workers(myWindows):
                 print("game is over")
                 print(env.board.result())
                 break
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
 
 
     client_socket.close()
