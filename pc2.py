@@ -26,7 +26,7 @@ from PyQt5.QtGui import *
 
 from_class = uic.loadUiType("chessAI.ui")[0]
 
-class WindowClass(QMainWindow, from_class) :
+class WindowClass(QMainWindow, from_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -54,9 +54,9 @@ def model_workers(myWindows):
     config = Config()
     chess_model = ChessModel(config)
     chess_model.build()
-    chess_model.load(chess_config_path, chess_model_path)
+    chess_model.load(chess_model_path)
 
-    if not chess_model.load(chess_config_path, chess_model_path):
+    if not chess_model.load(chess_model_path):
         raise RuntimeError("Failed to load the trained model weights")
     
     class_mapping = {
@@ -90,6 +90,7 @@ def model_workers(myWindows):
     is_moving = False
     start = False
     changes = None
+    action_flag = False
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST_IP, PORT))
 
@@ -97,6 +98,7 @@ def model_workers(myWindows):
     payload_size = struct.calcsize(">L")
     
     while True:
+        ###여기서부터
         while len(data) < payload_size:
             data += client_socket.recv(4096)
         
@@ -114,7 +116,7 @@ def model_workers(myWindows):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rgb = frame.copy()
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) 
         ret, otsu = cv2.threshold(gray, -1,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         contours, hierarchy = cv2.findContours(otsu, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
         COLOR = (0, 200, 0) #Rectangle color
@@ -126,6 +128,7 @@ def model_workers(myWindows):
         classes_np = boxes.cls.cpu().numpy()
         confidence_np =  boxes.conf.cpu().numpy()
         class_name = results[0].names
+        ###여기까지 쓰레드 , 욜로 데이터를 큐에 저장
         detections = Detections(
             xyxy = xyxy_np,
             confidence = confidence_np,
@@ -172,19 +175,18 @@ def model_workers(myWindows):
 
         if start == True:
             if is_turn == True and yolo_fen == chess_module_fen and is_moving == False:
-                action = chess_player.action(env)
+                action = chess_player.action(env, False)
                 print(f"white moves :{action}")
                 prev_pos = action[2:4]
                 prev_pos = chess.parse_square(prev_pos)
                 prev_piece = env.board.piece_at(prev_pos)
                 env.step(action)
+                action_flag = True
                 cur_pos = action[2:4]
                 cur_pos = chess.parse_square(cur_pos)
                 cur_piece = env.board.piece_at(cur_pos)
                 from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
                 pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
-                json_pixel_data = json.dumps(pixel_data) 
-                client_socket.sendall(json_pixel_data.encode('utf-8'))
                 is_moving = True
                 is_turn = False
                 if prev_piece != None and prev_piece != cur_piece:
@@ -198,7 +200,7 @@ def model_workers(myWindows):
                 
                 if prev_yolo_fen == yolo_fen:
                     count += 1
-                if count > 25:
+                if count > 10:
                     changes = compare_positions(yolo_fen, chess_module_fen)
                     if chess.Move.from_uci(changes) in env.board.legal_moves:
                         counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
@@ -228,7 +230,13 @@ def model_workers(myWindows):
                 print("game is over")
                 print(env.board.result())
                 break
-
+        if action_flag == True:
+            json_pixel_data = json.dumps(pixel_data) 
+            client_socket.sendall(json_pixel_data.encode('utf-8'))
+            action_flag = False
+        else:
+            json_pixel_data = json.dumps("None")
+            client_socket.sendall(json_pixel_data.encode('utf-8'))
 
     client_socket.close()
 
@@ -236,9 +244,9 @@ def model_workers(myWindows):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindows= WindowClass()   
-    myWindows.show()   
-
     worker_thread = threading.Thread(target= model_workers, args=(myWindows, ))
     worker_thread.start()
+
+    myWindows.show()   
 
     sys.exit(app.exec_())
