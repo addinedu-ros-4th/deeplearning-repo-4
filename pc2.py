@@ -1,15 +1,10 @@
 import cv2
-<<<<<<< HEAD
 import chess
-=======
-from collections import Counter
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
 import sys
 import socket
 import struct
 import numpy as np
 import yaml
-import chess
 from PIL import Image
 from ultralytics import YOLO
 import json
@@ -22,11 +17,11 @@ from alpha_zero_model.model_chess import ChessModel
 import threading
 from supervision import Detections, BoxAnnotator
 from supervision.draw.color import ColorPalette
+
 from PyQt5 import QtWidgets, uic, QtGui, QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-
 
 from_class = uic.loadUiType("chessAI.ui")[0]
 
@@ -40,11 +35,7 @@ class WindowClass(QMainWindow, from_class) :
         h, w, ch = image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-<<<<<<< HEAD
         p = convert_to_Qt_format.scaled(580, 580, Qt.KeepAspectRatio)
-=======
-        p = convert_to_Qt_format.scaled(540, 540, Qt.KeepAspectRatio)
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
     
     def mycurrentMove(self, action):
@@ -98,8 +89,7 @@ class WindowClass(QMainWindow, from_class) :
 
 
 
-
-def model_workers(myWindows):
+def model_workers():
     with open("data.yaml") as file:
         data = yaml.load(file, Loader= yaml.FullLoader)
         HOST_IP = data["ip"]
@@ -139,16 +129,16 @@ def model_workers(myWindows):
     y_top = 0
     width = 0
     height = 0
-
-    prev_yolo_fen = None
-    yolo_fen = None
+    prev_fen = None
+    fen = None
     box_annotator = BoxAnnotator(color = ColorPalette.default(), thickness = 2, text_thickness = 1, text_scale = 0.3)
     chess_player = ChessPlayer(config, chess_model.get_pipes(config.play.search_threads))
     env = ChessEnv().reset()
     is_turn = True
     is_moving = False
-    start = False
-    changes = None
+    is_start = False
+    prev_piece = None
+
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((HOST_IP, PORT))
 
@@ -172,13 +162,12 @@ def model_workers(myWindows):
         frame = cv2.imdecode(np.frombuffer(frame_data, np.uint8), cv2.IMREAD_COLOR)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         rgb = frame.copy()
-
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         ret, otsu = cv2.threshold(gray, -1,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         contours, hierarchy = cv2.findContours(otsu, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
         COLOR = (0, 200, 0) #Rectangle color
         
-        results = yolo_model.predict(source= frame, classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], verbose=False, conf= 0.6)
+        results = yolo_model.predict(source= frame, classes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], verbose=False, conf= 0.5)
         boxes = results[0].boxes
         xywh_np = boxes.xywh.cpu().numpy()
         xyxy_np = boxes.xyxy.cpu().numpy()
@@ -206,10 +195,11 @@ def model_workers(myWindows):
                 if 0.9 < ratio < 1.1:
                     x_left, y_top, width, height = cv2.boundingRect(cnt)
                     cropped = frame[y_top : y_top + height, x_left : x_left + width]
-                    myWindows.updateImage(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))     
+                    if 'myWindows' in globals():
+                        myWindows.updateImage(cv2.cvtColor(cropped, cv2.COLOR_BGR2RGB))     
 
 
-        vectorized_mapping = np.vectorize(class_mapping.get, otypes= [str])
+        vectorized_mapping = np.vectorize(class_mapping.get)
 
         mapped_classes_np = vectorized_mapping(classes_np)
         xy_np = xywh_np[:, :2]
@@ -219,7 +209,6 @@ def model_workers(myWindows):
             positions.append(position)
         positions = np.array(positions)
         pieces_positions = dict(zip(positions, mapped_classes_np))
-<<<<<<< HEAD
         fen = create_fen_from_positions(pieces_positions)
         if prev_fen == None:
             prev_fen = fen
@@ -268,76 +257,6 @@ def model_workers(myWindows):
             myWindows.captured(cur_piece, prev_piece)
 
         prev_fen = fen
-=======
-
-        if yolo_fen is not None:
-            prev_yolo_fen = yolo_fen
-
-        yolo_fen = create_fen_from_positions(pieces_positions)
-        chess_module_fen = env.board.fen().split(' ')[0]
-
-        if yolo_fen == chess_module_fen:
-            start = True
-
-        if start == True:
-            if is_turn == True and yolo_fen == chess_module_fen and is_moving == False:
-                action = chess_player.action(env)
-                print(f"white moves :{action}")
-                prev_pos = action[2:4]
-                prev_pos = chess.parse_square(prev_pos)
-                prev_piece = env.board.piece_at(prev_pos)
-                env.step(action)
-                cur_pos = action[2:4]
-                cur_pos = chess.parse_square(cur_pos)
-                cur_piece = env.board.piece_at(cur_pos)
-                from_x, from_y, to_x, to_y = img.automouse(action, (x_left, y_top), width // 8)
-                pixel_data = {"from_x" : from_x, "from_y" : from_y, "to_x" : to_x, "to_y" : to_y}
-                json_pixel_data = json.dumps(pixel_data) 
-                client_socket.sendall(json_pixel_data.encode('utf-8'))
-                is_moving = True
-                is_turn = False
-                if prev_piece != None and prev_piece != cur_piece:
-                    print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
-            elif is_moving == True and yolo_fen != chess_module_fen:
-
-                is_turn = False
-            elif is_turn == False and chess_module_fen== yolo_fen:
-                is_moving = False
-            elif is_turn == False and chess_module_fen!= yolo_fen and is_moving == False:
-                
-                if prev_yolo_fen == yolo_fen:
-                    count += 1
-                if count > 25:
-                    changes = compare_positions(yolo_fen, chess_module_fen)
-                    if chess.Move.from_uci(changes) in env.board.legal_moves:
-                        counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
-                        prev_classes_number = list(counter.items())
-                        prev_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),prev_classes_number))
-                        prev_pos = changes[2:4]
-                        prev_pos = chess.parse_square(prev_pos)
-                        prev_piece = env.board.piece_at(prev_pos)
-                        if is_promotion_move(changes, env.board):
-                            print(f"Promotion detected: {changes}")
-                            counter = Counter(list(results[0].boxes.cls.cpu().numpy()))
-                            cur_classes_number = list(counter.items())
-                            cur_classes_number = dict(map(lambda x: (class_name[x[0]],x[1]),cur_classes_number))
-                            promotion = identify_promotion(prev_classes_number, cur_classes_number)
-                            changes += promotion  
-                        print(f"black moves : {changes}")
-                        env.step(changes)
-                        cur_pos = changes[2:4]
-                        cur_pos = chess.parse_square(cur_pos)
-                        cur_piece = env.board.piece_at(cur_pos)
-                        is_turn = True
-                        if prev_piece != None and prev_piece != cur_piece:
-                            print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
-
-                    count = 0
-            if env.board.is_game_over():
-                print("game is over")
-                print(env.board.result())
-                break
->>>>>>> e3e925710e751cde852d8ed5ad9d058bf68a82cf
 
 
     client_socket.close()
@@ -346,9 +265,7 @@ def model_workers(myWindows):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     myWindows= WindowClass()   
-    myWindows.show()   
-
-    worker_thread = threading.Thread(target= model_workers, args=(myWindows, ))
+    worker_thread = threading.Thread(target= model_workers)
     worker_thread.start()
-
+    myWindows.show()   
     sys.exit(app.exec_())
