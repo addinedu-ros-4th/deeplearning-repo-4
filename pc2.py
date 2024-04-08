@@ -37,6 +37,9 @@ class WindowClass(QMainWindow, from_class):
         self.client_thread.updateImage.connect(self.updateImage)
         self.client_thread.toThread2.connect(self.rl_thread.action)
         self.rl_thread.toThread1.connect(self.client_thread.update_action)
+        self.rl_thread.mycurrentMove.connect(self.mycurrentMove)
+        self.rl_thread.aicurrentMove.connect(self.aicurrentMove)
+        self.rl_thread.captured.connect(self.captured)
 
         self.client_thread.start()
         self.rl_thread.start()
@@ -48,6 +51,60 @@ class WindowClass(QMainWindow, from_class):
         convert_to_Qt_format = QtGui.QImage(image.data.tobytes(), w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(630, 630, Qt.KeepAspectRatio)
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
+
+    def mycurrentMove(self, action):
+        split_position = 2 
+        move = action
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.mymove.setText(f"{first_part}  to {second_part}")
+        move = f"Addin-Pago: {first_part}  to {second_part}"
+        myWindows.gameLog(move)
+
+    def aicurrentMove(self, changes):
+        split_position = 2 
+        move = changes
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.compmove.setText(f"{first_part} to {second_part}")
+        move = f"Chess.com: {first_part} to {second_part}"
+        myWindows.gameLog(move)
+    
+    def gameLog(self, moves):
+        current_text = self.gamehistory.text()
+        text = current_text+'\n' + moves
+        self.gamehistory.setText(text)
+
+    def captured(self, cur_piece, prev_piece):
+        piece_map = {
+            "p": "B Pawn", "r": "B Rook", "n": "B Knight", 
+            "b": "B Bishop", "k": "B King", "q": "B Queen",
+            "P": "W Pawn", "R": "W Rook", "N": "W Knight", 
+            "B": "W Bishop", "K": "W King", "Q": "W Queen"
+        }
+
+        # 문자열로 변환
+        cur_piece_str = str(cur_piece)
+        prev_piece_str = str(prev_piece)
+
+        # 말의 심볼을 이름으로 변환, 맵에 없는 경우 'Unknown piece'로 처리
+        current = str(piece_map.get(cur_piece_str, "Unknown piece"))
+        previous = str(piece_map.get(prev_piece_str, "Unknown piece"))
+
+        if current.startswith('W'):
+            current_text = self.whitepieces.text()
+            text = current_text + previous + '/' # 'W ' 또는 'B ' 제거
+            self.whitepieces.setText(text)
+            self.whitepieces.setWordWrap(True)
+
+        else:
+            current_text = self.blackpieces.text()
+            text = current_text + previous + '/' # 'W ' 또는 'B ' 제거
+            self.blackpieces.setText(text)
+            self.blackpieces.setWordWrap(True)
+
+
+
 
 
 class ClientThread(QThread):
@@ -164,6 +221,10 @@ class ClientThread(QThread):
 
 class RL_Thread(QThread):
     toThread1 = pyqtSignal(dict)
+    mycurrentMove = pyqtSignal(str)
+    aicurrentMove = pyqtSignal(str)
+    captured = pyqtSignal(chess.Piece, chess.Piece)
+
 
     def __init__(self):
         super().__init__() 
@@ -238,6 +299,7 @@ class RL_Thread(QThread):
             if self.is_turn == True and self.yolo_fen == chess_module_fen and self.is_moving == False:
                 action = self.chess_player.action(self.env, False)
                 print(f"white moves : {action}")
+                self.mycurrentMove.emit(action)
                 prev_pos = action[2:4]
                 prev_pos = chess.parse_square(prev_pos)
                 prev_piece = self.env.board.piece_at(prev_pos)
@@ -252,6 +314,7 @@ class RL_Thread(QThread):
                 self.is_turn = False
                 if prev_piece != None and prev_piece != cur_piece:
                     print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
+                    self.captured.emit(cur_piece,prev_piece)
             elif self.is_moving == True and self.yolo_fen != chess_module_fen:
                 self.is_turn = False
             elif self.is_turn == False and chess_module_fen== self.yolo_fen:
@@ -276,6 +339,7 @@ class RL_Thread(QThread):
                             promotion = identify_promotion(prev_classes_number, cur_classes_number)
                             self.changes += promotion  
                         print(f"black moves : {self.changes}")
+                        self.aicurrentMove.emit(self.changes)
                         self.env.step(self.changes)
                         cur_pos = self.changes[2:4]
                         cur_pos = chess.parse_square(cur_pos)
@@ -283,6 +347,7 @@ class RL_Thread(QThread):
                         self.is_turn = True
                         if prev_piece != None and prev_piece != cur_piece:
                             print(f"{cur_piece}가 {prev_piece}를 잡았습니다.")
+                            self.captured.emit(cur_piece,prev_piece)
 
                     self.count = 0
             if self.env.board.is_game_over():
