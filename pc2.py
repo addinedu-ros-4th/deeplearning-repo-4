@@ -42,7 +42,54 @@ class WindowClass(QMainWindow, from_class):
         convert_to_Qt_format = QtGui.QImage(image.data.tobytes(), w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(540, 540, Qt.KeepAspectRatio)
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
+        
+    def mycurrentMove(self, action):
+        split_position = 2 
+        move = action
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.mymove.setText(f"{first_part}  to {second_part}")
+        move = f"Addin-Pago: {first_part}  to {second_part}"
+        myWindows.gameLog(move)
 
+    def aicurrentMove(self, changes):
+        split_position = 2 
+        move = changes
+        first_part = move[:split_position]
+        second_part = move[split_position:]
+        self.compmove.setText(f"{first_part} to {second_part}")
+        move = f"Chess.com: {first_part} to {second_part}"
+        myWindows.gameLog(move)
+    
+    def gameLog(self, moves):
+        current_text = self.gamehistory.text()
+        text = current_text+'\n' + moves
+        self.gamehistory.setText(text)
+
+    def captured(self, cur_piece, prev_piece):
+        piece_map = {
+            "p": "Black Pawn", "r": "Black Rook", "n": "Black Knight", 
+            "b": "Black Bishop", "k": "Black King", "q": "Black Queen",
+            "P": "White Pawn", "R": "White Rook", "N": "White Knight", 
+            "B": "White Bishop", "K": "White King", "Q": "White Queen"
+        }
+
+        # 문자열로 변환
+        cur_piece_str = str(cur_piece)
+        prev_piece_str = str(prev_piece)
+
+        # 말의 심볼을 이름으로 변환, 맵에 없는 경우 'Unknown piece'로 처리
+        current = str(piece_map.get(cur_piece_str, "Unknown piece"))
+        previous = str(piece_map.get(prev_piece_str, "Unknown piece"))
+
+        if previous.islower():
+            current_text = self.blackpieces.text()
+            text = current_text + previous + ','
+            self.blackpieces.setText(text)
+        else:
+            current_text = self.whitepieces.text()
+            text = current_text + previous + ','
+            self.whitepieces.setText(text)
 
 class ClienThread(QThread):
     updateImage = pyqtSignal(np.ndarray)
