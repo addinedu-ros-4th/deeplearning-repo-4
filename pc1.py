@@ -81,7 +81,7 @@ def main():
             break 
 
         pixel_data = server_socket.recv()
-        if pixel_data is not None:
+        if pixel_data["action"] == "action":
             from_x = pixel_data["from_x"]
             from_y = pixel_data["from_y"]
             to_x = pixel_data["to_x"]
