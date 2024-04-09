@@ -1,6 +1,6 @@
 import cv2
 from collections import Counter
-import sys
+import os, sys
 import socket
 import struct
 import numpy as np
@@ -11,17 +11,17 @@ from ultralytics import YOLO
 import json
 from auto import *
 from chess_game import *
-from alpha_zero_model.config import Config
-from alpha_zero_model.chess_env import ChessEnv
-from alpha_zero_model.player_chess import ChessPlayer
-from alpha_zero_model.model_chess import ChessModel
+from alpha_zero_model.src.chess_zero.config import Config, PlayWithHumanConfig
+from alpha_zero_model.src.chess_zero.env.chess_env import ChessEnv
+from alpha_zero_model.src.chess_zero.agent.player_chess import ChessPlayer
+from alpha_zero_model.src.chess_zero.agent.model_chess import ChessModel
+from alpha_zero_model.src.chess_zero.lib.model_helper import load_best_model_weight
 from supervision import Detections, BoxAnnotator
 from supervision.draw.color import ColorPalette
 from PyQt5 import QtWidgets, uic, QtGui, QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-
 
 from_class = uic.loadUiType("chessAI.ui")[0]
 
@@ -101,9 +101,6 @@ class WindowClass(QMainWindow, from_class):
             text = current_text + previous + '/' # 'W ' 또는 'B ' 제거
             self.blackpieces.setText(text)
             self.blackpieces.setWordWrap(True)
-
-
-
 
 
 class ClientThread(QThread):
@@ -233,11 +230,11 @@ class RL_Thread(QThread):
             self.yaml_data = yaml.load(file, Loader=yaml.FullLoader)
 
         self.config = Config()
+        PlayWithHumanConfig().update_play_config(self.config.play)
+        self.me_player = None
+        self.me_player = self.get_player(self.config)
         self.chess_model = ChessModel(self.config)
-        self.chess_model.build()
-        self.chess_model.load(self.yaml_data["chess_config_path"], self.yaml_data["chess_model_path"])
         self.env = ChessEnv().reset()
-        self.chess_player = ChessPlayer(self.config, self.chess_model.get_pipes(self.config.play.search_threads))
         self.img = Img()
 
         if not self.chess_model.load(self.yaml_data["chess_config_path"], self.yaml_data["chess_model_path"]):
@@ -268,6 +265,12 @@ class RL_Thread(QThread):
         self.action_flag = False
         self.pixel_data = {}
 
+    def get_player(self, config):
+        model = ChessModel(config)
+        if not load_best_model_weight(model):
+            raise RuntimeError("Best model not found!")
+        return ChessPlayer(config, model.get_pipes(config.play.search_threads))
+
     def action(self, results_dict):
         xywh_np = results_dict["xywh"]
         classes_np = results_dict["classes"]
@@ -297,7 +300,9 @@ class RL_Thread(QThread):
 
         if self.is_start == True:
             if self.is_turn == True and self.yolo_fen == chess_module_fen and self.is_moving == False:
-                action = self.chess_player.action(self.env, False)
+                if not self.me_player:
+                    self.me_player = self.get_player(self.config)
+                action = self.me_player.action(self.env, False)
                 print(f"white moves : {action}")
                 self.mycurrentMove.emit(action)
                 prev_pos = action[2:4]
@@ -357,6 +362,7 @@ class RL_Thread(QThread):
         if self.action_flag == True:
             self.toThread1.emit(self.pixel_data)
             self.action_flag = False
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

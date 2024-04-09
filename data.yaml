@@ -1,5 +1,5 @@
 ip : "192.168.0.41"
-port : 18886
+port : 18890
 yolo_model_path : "yolov8l_best.pt"
-chess_model_path : "alpha_zero_model/model_best_weight_2.h5"
-chess_config_path : "alpha_zero_model/model_best_config_2.json"
+chess_model_path : "model_best_weight_2.h5"
+chess_config_path : "model_best_config_2.json"
