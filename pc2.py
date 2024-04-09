@@ -1,6 +1,5 @@
 import cv2
 import chess
-
 from collections import Counter
 import sys
 import socket
@@ -52,57 +51,6 @@ class WindowClass(QMainWindow, from_class):
         convert_to_Qt_format = QtGui.QImage(image.data.tobytes(), w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(610, 610, Qt.KeepAspectRatio)
         self.chessScreen.setPixmap(QtGui.QPixmap.fromImage(p))
-    
-    def mycurrentMove(self, action):
-        split_position = 2 
-        move = action
-        first_part = move[:split_position]
-        second_part = move[split_position:]
-        self.mymove.setText(f"{first_part}  to {second_part}")
-        move = f"Addin-Pago: {first_part}  to {second_part}"
-        myWindows.gameLog(move)
-
-    def aicurrentMove(self, changes):
-        split_position = 2 
-        move = changes
-        first_part = move[:split_position]
-        second_part = move[split_position:]
-        self.compmove.setText(f"{first_part} to {second_part}")
-        move = f"Chess.com: {first_part} to {second_part}"
-        myWindows.gameLog(move)
-    
-    def gameLog(self, moves):
-        current_text = self.gamehistory.text()
-        text = current_text+'\n' + moves
-        self.gamehistory.setText(text)
-
-    def captured(self, cur_piece, prev_piece):
-        piece_map = {
-            "p": "Black Pawn", "r": "Black Rook", "n": "Black Knight", 
-            "b": "Black Bishop", "k": "Black King", "q": "Black Queen",
-            "P": "White Pawn", "R": "White Rook", "N": "White Knight", 
-            "B": "White Bishop", "K": "White King", "Q": "White Queen"
-        }
-
-        # 문자열로 변환
-        cur_piece_str = str(cur_piece)
-        prev_piece_str = str(prev_piece)
-
-        # 말의 심볼을 이름으로 변환, 맵에 없는 경우 'Unknown piece'로 처리
-        current = str(piece_map.get(cur_piece_str, "Unknown piece"))
-        previous = str(piece_map.get(prev_piece_str, "Unknown piece"))
-
-        if previous.islower():
-            current_text = self.blackpieces.text()
-            text = current_text + previous + ','
-            self.blackpieces.setText(text)
-        else:
-            current_text = self.whitepieces.text()
-            text = current_text + previous + ','
-            self.whitepieces.setText(text)
-        
-
-
 
     def mycurrentMove(self, action):
         split_position = 2 
@@ -156,9 +104,6 @@ class WindowClass(QMainWindow, from_class):
             self.blackpieces.setWordWrap(True)
 
 
-
-
-
 class ClientThread(QThread):
     updateImage = pyqtSignal(np.ndarray)
     toThread2 = pyqtSignal(dict)
@@ -171,7 +116,7 @@ class ClientThread(QThread):
             self.client_socket.connect((self.yaml_data["ip"], self.yaml_data["port"]))
             self.yolo_model = YOLO(self.yaml_data["yolo_model_path"])
 
-        self.box_annotator = BoxAnnotator(color = ColorPalette.default(), thickness = 4, text_thickness = 2, text_scale = 0.7)
+        self.box_annotator = BoxAnnotator(color = ColorPalette.default(), thickness = 2, text_thickness = 1, text_scale = 0.5)
         self.pixel_data = {"action" : "waiting"}
         self.result_available = False  
 
