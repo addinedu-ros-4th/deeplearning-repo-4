@@ -17,7 +17,6 @@ from alpha_zero_model.config import Config
 from alpha_zero_model.chess_env import ChessEnv
 from alpha_zero_model.player_chess import ChessPlayer
 from alpha_zero_model.model_chess import ChessModel
-import threading
 from supervision import Detections, BoxAnnotator
 from supervision.draw.color import ColorPalette
 from PyQt5 import QtWidgets, uic, QtGui, QtCore
@@ -263,7 +262,9 @@ class ClientThread(QThread):
     def send(self, pixel_data):
         try:
             json_pixel_data = json.dumps(pixel_data)
-            self.client_socket.sendall(json_pixel_data.encode('utf-8'))
+            encoded_data = json_pixel_data.encode('utf-8')
+            length_prefix = struct.pack('>L', len(encoded_data))
+            self.client_socket.sendall(length_prefix + encoded_data)   
         except BrokenPipeError as e:
             print(f"Error: {e}")
 
@@ -283,17 +284,16 @@ class RL_Thread(QThread):
         super().__init__() 
         with open("data.yaml") as file:
             self.yaml_data = yaml.load(file, Loader=yaml.FullLoader)
-            self.yolo_model = YOLO(self.yaml_data["yolo_model_path"])
 
         self.config = Config()
         self.chess_model = ChessModel(self.config)
         self.chess_model.build()
-        self.chess_model.load(self.yaml_data["chess_model_path"])
+        self.chess_model.load(self.yaml_data["chess_config_path"], self.yaml_data["chess_model_path"])
         self.env = ChessEnv().reset()
         self.chess_player = ChessPlayer(self.config, self.chess_model.get_pipes(self.config.play.search_threads))
         self.img = Img()
 
-        if not self.chess_model.load(self.yaml_data["chess_model_path"]):
+        if not self.chess_model.load(self.yaml_data["chess_config_path"], self.yaml_data["chess_model_path"]):
             raise RuntimeError("Failed to load the trained model weights")
 
         self.class_mapping = {

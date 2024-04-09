@@ -31,19 +31,22 @@ class Server:
         self.client_socket.sendall(struct.pack(">L", size) + data)
 
     def recv(self):
+        length_prefix = self.client_socket.recv(4)
+        if not length_prefix:
+            return None 
 
-        received_data = self.client_socket.recv(1024).decode('utf-8')
-    
+        data_length = struct.unpack('>L', length_prefix)[0]
+
+        data = b''
+        while len(data) < data_length:
+            to_read = data_length - len(data)
+            data += self.client_socket.recv(to_read)
+
         try:
-            pixel_data = json.loads(received_data)
-        
-            if pixel_data == "None":
-                pixel_data = None
-                
+            json_pixel_data = data.decode('utf-8')
+            pixel_data = json.loads(json_pixel_data)
             return pixel_data
-        
         except json.JSONDecodeError as e:
-    
             print(f"JSON 디코드 오류: {e}")
             return None
 
