@@ -10,17 +10,55 @@ from queue import Queue
 
 from auto import *
 
-def handle_client(connection,pixel_queue):
-    while True:
-        received_pixel_data = connection.recv(1024)
-        if received_pixel_data:
-            pixel_data = json.loads(received_pixel_data.decode('utf-8'))
-            pixel_queue.put(pixel_data)
-        elif not received_pixel_data:
-            break
+class Server:
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.socket = None
+        self.client_socket = None
+
+    def start(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.bind((self.host, self.port))
+        self.socket.listen()
+        print(f"Listening on {self.host}:{self.port}...")
+        self.client_socket, addr = self.socket.accept()
+        print(f"Connection from {addr} has been established.")
+
+    def send(self, data):
+        data = data.tobytes()
+        size = len(data)
+        self.client_socket.sendall(struct.pack(">L", size) + data)
+
+    def recv(self):
+        length_prefix = self.client_socket.recv(4)
+        if not length_prefix:
+            return None 
+
+        data_length = struct.unpack('>L', length_prefix)[0]
+
+        data = b''
+        while len(data) < data_length:
+            to_read = data_length - len(data)
+            data += self.client_socket.recv(to_read)
+
+        try:
+            json_pixel_data = data.decode('utf-8')
+            pixel_data = json.loads(json_pixel_data)
+            return pixel_data
+        except json.JSONDecodeError as e:
+            print(f"JSON 디코드 오류: {e}")
+            return None
+
+    def close(self):
+        if self.client_socket:
+            self.client_socket.close()
+        if self.socket:
+            self.socket.close()
+        print("Server closed.")
 
 def main():
-    pixel_queue = Queue()
+
     with open("data.yaml") as file:
         data = yaml.load(file, Loader= yaml.FullLoader)
         HOST_IP = data["ip"]
@@ -28,29 +66,25 @@ def main():
 
     x_norm = 1920/1850
     y_norm = 1080/1053
+    pixel_data = None
+    server_socket = Server(HOST_IP, PORT)
+    server_socket.start()
 
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind((HOST_IP, PORT))
-    server_socket.listen(5)
-    print("클라이언트 연결 대기중...")
-    connection, addr = server_socket.accept()
-    print(f"{addr}에서 연결되었습니다.")
     img = Img()
-    server_thread = threading.Thread(target=handle_client, args=(connection, pixel_queue))
-    server_thread.start()
-
+    
     while True:
-
         cap = img.capture()
         frame = cv2.cvtColor(cap, cv2.COLOR_BGR2RGB)
         _, frame = cv2.imencode('.jpg', frame)
 
-        data = frame.tobytes() 
-        size = len(data)
-        connection.sendall(struct.pack(">L", size) + data)
+        try:
+            server_socket.send(frame)
+        except Exception as e:
+            print(f"Frame 전송 중 오류 발생: {e}")
+            break 
 
-        if not pixel_queue.empty():
-            pixel_data = pixel_queue.get()
+        pixel_data = server_socket.recv()
+        if pixel_data["action"] == "action":
             from_x = pixel_data["from_x"]
             from_y = pixel_data["from_y"]
             to_x = pixel_data["to_x"]
