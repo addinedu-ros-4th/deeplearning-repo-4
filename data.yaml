@@ -1,5 +1,5 @@
 ip : "192.168.0.41"
 port : 18886
-yolo_model_path : "best_v8.pt"
-chess_model_path : "/home/jun/dev_ws/deep_pro/deeplearning-repo-4/alpha_zero_model/model_best_weight_2.h5"
-chess_config_path : "/home/jun/dev_ws/deep_pro/deeplearning-repo-4/alpha_zero_model/model_best_config_2.json"
+yolo_model_path : "yolov5nu_best.pt"
+chess_model_path : "/home/addinedu/amr_ws/git_ws/deeplearning-repo-4/alpha_zero_model/model_best_weight_2.h5"
+chess_config_path : "/home/addinedu/amr_ws/git_ws/deeplearning-repo-4/alpha_zero_model/model_best_config_2.json"
