@@ -1,20 +1,6 @@
-# ♞Chess AI - Deep Learning Project♘
-딥러닝 프로젝트 4조. 체스AI vs AI
+# ♞ Chess AI - Deep Learning Project ♘
 
-<img src="https://img.shields.io/badge/github-181717?style=flat-square&logo=GitHub&logoColor=white">
-<img src="https://img.shields.io/badge/git-F05032?style=flat-square&logo=Git&logoColor=white">
-<img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=Slack&logoColor=white">
-<img src="https://img.shields.io/badge/Chess.com-81B64C?style=flat-square&logo=Chess.com&logoColor=white"> 
-<img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=Linux&logoColor=white"> 
-<img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=Ubuntu&logoColor=white"> 
-<img src="https://img.shields.io/badge/PyQT-41CD52?style=flat-square&logo=Qt&logoColor=white">
-<img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"> 
-<img src="https://img.shields.io/badge/GoogleCloud-4285F4?style=flat-square&logo=GoogleCloud&logoColor=white"> 
-<img src="https://img.shields.io/badge/Yolov8-8A2BE2">
-<img src="https://img.shields.io/badge/TCP/IP-blue">
-<img src="https://img.shields.io/badge/python-3776AB?style=flat-square&logo=Python&logoColor=white"> 
-<img src="https://img.shields.io/badge/VSC-007ACC?style=flat-square&logo=VisualStudioCode&logoColor=white"> 
-<img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=flat-square&logo=TensorFlow&logoColor=white"> 
+
 
 
 ---
@@ -51,4 +37,35 @@
 ---
 
 # 2. About the Project
+## Environment
+### Development 
+<img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=Linux&logoColor=white"> <img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=Ubuntu&logoColor=white"> <img src="https://img.shields.io/badge/VSC-007ACC?style=flat-square&logo=VisualStudioCode&logoColor=white"> 
+
+### Language
+<img src="https://img.shields.io/badge/python-3776AB?style=flat-square&logo=Python&logoColor=white">
+
+### Libraries & Tools
+<img src="https://img.shields.io/badge/Yolov8-8A2BE2"> <img src="https://img.shields.io/badge/TCP/IP-blue"> <img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=flat-square&logo=TensorFlow&logoColor=white"> <img src="https://img.shields.io/badge/PyQT-41CD52?style=flat-square&logo=Qt&logoColor=white"> <img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=MySQL&logoColor=white"> <img src="https://img.shields.io/badge/Chess.com-81B64C?style=flat-square&logo=Chess.com&logoColor=white"> 
+
+### Version Control
+<img src="https://img.shields.io/badge/git-F05032?style=flat-square&logo=Git&logoColor=white"> <img src="https://img.shields.io/badge/github-181717?style=flat-square&logo=GitHub&logoColor=white">
+
+### Communication & Documentation Work
+<img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=Slack&logoColor=white"> <img src="https://img.shields.io/badge/GoogleCloud-4285F4?style=flat-square&logo=GoogleCloud&logoColor=white"> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
