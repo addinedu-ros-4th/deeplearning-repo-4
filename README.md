@@ -6,13 +6,13 @@
 ---
 
 # 1. Introduction
-## Project Description
+## 🔎 Project Description 🔎
     After watching a short video clip about autonomous driving through reinforcement learning, 
     our team focused on the keyword "Reinforcement Learning."
     We decided to develop an AI that plays chess.
     We challenged ourselves to compete against Chess.com(Computer Mode) and tried to win as many levels as possible.
   
-## Project Objectives / Skills
+## 🎯 Project Objectives / Goals 🎯
     1. Deep Learning
     - Recognizing Chess Pieces through the Yolov8 Model
     
@@ -27,7 +27,7 @@
     
     5. Database
     - Saving FEN Data / Best Moves
-## Team Members
+## 👥 Team Members 👥
   [Jun Kwak](https://github.com/junroun) - Team Leader / Applied CNN Model for Reinforcement Learning
   
   [Sungho Cho](https://github.com/cccsssshh) - 
@@ -37,7 +37,7 @@
 ---
 
 # 2. About the Project
-## Environment
+## 💻 Environment 💻
 ### Development 
 <img src="https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=Linux&logoColor=white"> <img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat-square&logo=Ubuntu&logoColor=white"> <img src="https://img.shields.io/badge/VSC-007ACC?style=flat-square&logo=VisualStudioCode&logoColor=white"> 
 
@@ -53,6 +53,11 @@
 ### Communication & Documentation Work
 <img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=Slack&logoColor=white"> <img src="https://img.shields.io/badge/GoogleCloud-4285F4?style=flat-square&logo=GoogleCloud&logoColor=white"> 
 
+## System Design
+
+![Screenshot from 2024-04-10 17-55-19](https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/05af9497-5103-42e4-9c49-7d0d30f8ff0b)
+---
+![Screenshot from 2024-04-10 18-09-36](https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/4576e794-2548-475c-9977-e1e5fb45df93)
 
 
 
