@@ -54,10 +54,33 @@
 <img src="https://img.shields.io/badge/Slack-4A154B?style=flat-square&logo=Slack&logoColor=white"> <img src="https://img.shields.io/badge/GoogleCloud-4285F4?style=flat-square&logo=GoogleCloud&logoColor=white"> 
 
 ## System Design
-
+    System Diagram of the entire Project
 ![Screenshot from 2024-04-10 17-55-19](https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/05af9497-5103-42e4-9c49-7d0d30f8ff0b)
 ---
+
+    Flow chart of how a single move is made
 ![Screenshot from 2024-04-10 18-09-36](https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/4576e794-2548-475c-9977-e1e5fb45df93)
+
+## Deep Learning
+<img src = "https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/286b65e7-79f2-48c1-bf62-9d4d1b8b5144" width="50%" height="50%">
+
+    Trained different Chess Pieces through OpenCV(Yolov8) for object detection
+
+<img src = "https://github.com/addinedu-ros-4th/deeplearning-repo-4/assets/155615876/1223588d-9aaf-43ee-a2b0-065fd00d73ed" width="50%" height="50%">
+
+
+    
+## Reinforcement Learning
+    CNN(Convolutional Neural Network) Based Model
+    
+
+## PC Communication
+
+## Output
+
+---
+
+# 3. Reflection
 
 
 
