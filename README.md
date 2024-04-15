@@ -80,7 +80,7 @@
 
 ---
 
-# 3. Reflection
+# 3. Follow Through Guideline
 
 
 
